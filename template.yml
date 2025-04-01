@@ -18,34 +18,34 @@ Resources:
   publicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref myVPC  # Aqui está a referência ao VPC
-      CidrBlock: 10.0.1.0/24  # Exemplo de bloco CIDR para a subnet
-      AvailabilityZone: us-east-1a  # Exemplo de AZ
-      MapPublicIpOnLaunch: true  # Exemplo de configuração
+      VpcId: !Ref myVPC  
+      CidrBlock: 10.0.1.0/24  
+      AvailabilityZone: us-east-1a  
+      MapPublicIpOnLaunch: true 
 
   publicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref myVPC  # Aqui está a referência ao VPC
-      CidrBlock: 10.0.2.0/24  # Exemplo de bloco CIDR para a subnet
-      AvailabilityZone: us-east-1b  # Exemplo de AZ
-      MapPublicIpOnLaunch: true  # Exemplo de configuração    
+      VpcId: !Ref myVPC  
+      CidrBlock: 10.0.2.0/24  
+      AvailabilityZone: us-east-1b  
+      MapPublicIpOnLaunch: true    
 
   privateSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref myVPC  # Aqui está a referência ao VPC
-      CidrBlock: 10.0.3.0/24  # Exemplo de bloco CIDR para a subnet
-      AvailabilityZone: us-east-1a  # Exemplo de AZ
-      MapPublicIpOnLaunch: false  # Exemplo de configuração
+      VpcId: !Ref myVPC  
+      CidrBlock: 10.0.3.0/24  
+      AvailabilityZone: us-east-1a  
+      MapPublicIpOnLaunch: false  
 
   privateSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref myVPC  # Aqui está a referência ao VPC
-      CidrBlock: 10.0.4.0/24  # Exemplo de bloco CIDR para a subnet
-      AvailabilityZone: us-east-1b  # Exemplo de AZ
-      MapPublicIpOnLaunch: false  # Exemplo de configuração
+      VpcId: !Ref myVPC  
+      CidrBlock: 10.0.4.0/24  
+      AvailabilityZone: us-east-1b  
+      MapPublicIpOnLaunch: false  
 
   myInternetGateway:
     Type: AWS::EC2::InternetGateway
