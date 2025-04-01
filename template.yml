@@ -1,0 +1,162 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Part 1  - Create networking resources with CloudFormation
+
+Parameters:
+  AmiID:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: 'The ID of the AMI.'
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+
+Resources:
+  myVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+
+  publicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref myVPC  # Aqui está a referência ao VPC
+      CidrBlock: 10.0.1.0/24  # Exemplo de bloco CIDR para a subnet
+      AvailabilityZone: us-east-1a  # Exemplo de AZ
+      MapPublicIpOnLaunch: true  # Exemplo de configuração
+
+  publicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref myVPC  # Aqui está a referência ao VPC
+      CidrBlock: 10.0.2.0/24  # Exemplo de bloco CIDR para a subnet
+      AvailabilityZone: us-east-1b  # Exemplo de AZ
+      MapPublicIpOnLaunch: true  # Exemplo de configuração    
+
+  privateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref myVPC  # Aqui está a referência ao VPC
+      CidrBlock: 10.0.3.0/24  # Exemplo de bloco CIDR para a subnet
+      AvailabilityZone: us-east-1a  # Exemplo de AZ
+      MapPublicIpOnLaunch: false  # Exemplo de configuração
+
+  privateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref myVPC  # Aqui está a referência ao VPC
+      CidrBlock: 10.0.4.0/24  # Exemplo de bloco CIDR para a subnet
+      AvailabilityZone: us-east-1b  # Exemplo de AZ
+      MapPublicIpOnLaunch: false  # Exemplo de configuração
+
+  myInternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  myRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:  
+        Ref: myVPC
+
+  myRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayToInternet
+    Properties:
+       RouteTableId:
+         Ref: myRouteTable
+       DestinationCidrBlock: 0.0.0.0/0
+       GatewayId:
+         Ref: myInternetGateway
+
+  GatewayToInternet:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref myVPC
+      InternetGatewayId: !Ref myInternetGateway
+      
+  PublicSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref publicSubnet1
+      RouteTableId: !Ref myRouteTable
+
+  PublicSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref publicSubnet2
+      RouteTableId: !Ref myRouteTable        
+
+  myInstance1:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      KeyName: !Ref myKeyPair
+      SubnetId: !Ref publicSubnet1
+      AvailabilityZone: us-east-1a    
+      ImageId: !Ref AmiID
+      InstanceType: t2.micro
+      SecurityGroupIds: 
+      - !Ref mySecurityGroup
+      UserData: !Base64 |
+        #!/bin/bash
+        yum update -y
+        yum install httpd -y httpd-tools mod_ssl
+        service httpd start
+        chkconfig httpd on
+        systemctl start httpd
+        systemctl enable httpd
+        echo "Hello, World, from your Webserver on Amazon Linux" > /var/www/html/index.html
+        echo "Healthy" > /var/www/html/health.html
+
+  myInstance2:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      SubnetId: !Ref publicSubnet2
+      AvailabilityZone: us-east-1b    
+      ImageId: !Ref AmiID
+      InstanceType: t2.micro
+      SecurityGroupIds: 
+      - !Ref mySecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install httpd -y httpd-tools mod_ssl
+          service httpd start
+          chkconfig httpd on
+          systemctl start httpd
+          systemctl enable httpd
+          echo "Hello, World, from your Webserver on Amazon Linux" > /var/www/html/index.html
+          echo "Healthy" > /var/www/html/health.html 
+
+  mySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref myVPC
+      GroupDescription: 'Allow HTTP/HTTPS and SSH inbound and outbound traffic'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0      
+
+  myKeyPair:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: my-ssh-key
+      PublicKeyMaterial:    
+
+Outputs:
+  WebsiteURL1:
+    Description: URL for Instance 1
+    Value: !Sub 'http://${myInstance1.PublicIp}'
+  WebsiteURL2:
+    Description: URL for Instance 2
+    Value: !Sub 'http://${myInstance2.PublicIp}'                    
+
+
